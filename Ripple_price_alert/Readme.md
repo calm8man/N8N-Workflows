@@ -1,10 +1,13 @@
 توضیح کوتاه:
- workflow قیمت XRP را از CoinMarketCap می‌گیرد و در سقوط یا جهش شدید در Telegram خبر می‌دهد.
+ workflow قیمت XRP را از CoinMarketCap می‌گیرد و در سقوط یا جهش شدید در Telegram خبر می‌دهد
+
 پیش‌ نیازها:
- کلید API رایگان CoinMarketCap، یک Telegram Bot از BotFather، و chat id.
+ کلید API رایگان CoinMarketCap، یک Telegram Bot از BotFather، و chat id
 راه‌اندازی: وارد کردن فایل در n8n، ساخت اعتبارنامه Header Auth با نام هدر X-CMC_PRO_API_KEY، اتصال تلگرام و پر کردن chat id.
+
 شرط‌ها:
  DROP وقتی 24 ساعته 5- یا کمتر باشد، PUMP وقتی 5+ یا بیشتر باشد، WEEKLY_DROP وقتی 7 روزه 10- یا کمتر باشد.
+
 سفارشی‌سازی: 
 برای سایر رمزارز ها کافیست فقط مقدار id را عوض کنید
 ضمنا بعد از تغییر آیدی مثلا عدد 1 برای بیتکوین باید سایر متغییر ها هم داخل ورک فلو عوض شوند
