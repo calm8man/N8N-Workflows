@@ -1,0 +1,256 @@
+{
+  "name": "XRP_Price",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "52"
+            },
+            {
+              "name": "convert",
+              "value": "USD"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -1728,
+        -144
+      ],
+      "id": "61d4c205-135d-438a-9301-38a7517b09d9",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "I7lLhPVscaYJyHMY",
+          "name": "CoinMarketCap API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"Price\":  {{ $json.data[\"52\"].quote.USD.price }},\n  \"percent_24\": {{ $json.data[\"52\"].quote.USD.percent_change_24h }},\n  \"percent_7\": {{ $json.data[\"52\"].quote.USD.percent_change_7d }} \n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -1520,
+        0
+      ],
+      "id": "fb36830d-7314-4674-a103-4399d078e276",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.percent_24 }}",
+                    "rightValue": -5,
+                    "operator": {
+                      "type": "number",
+                      "operation": "lte"
+                    },
+                    "id": "79d59403-fadf-42f6-a27e-087edff8b08f"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "DROP"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "f269f2a1-663b-45f3-8d85-468db417cc5b",
+                    "leftValue": "={{ $json.percent_24 }}",
+                    "rightValue": 5,
+                    "operator": {
+                      "type": "number",
+                      "operation": "gte"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PUMP"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "a56b10f2-5ef8-44b1-ace9-1dc189c1c379",
+                    "leftValue": "={{ $json.percent_7 }}",
+                    "rightValue": -10,
+                    "operator": {
+                      "type": "number",
+                      "operation": "lte"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "WEEKLY_DROP"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "none",
+          "allMatchingOutputs": true
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -1248,
+        -80
+      ],
+      "id": "b77056d7-01f3-426b-b715-dfefde10f4d1",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "text": "=XRP Alert\nPrice: {{ $('Edit Fields').item.json.Price.round(3) }} USD\n\n24h: {{ $('Edit Fields').item.json.percent_24.round(3) }}%\n\n7d: {{ $('Edit Fields').item.json.percent_7.round(3) }}%",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -896,
+        -176
+      ],
+      "id": "cdb31b49-c2ef-4c08-ab38-fe41b063acd4",
+      "name": "Send a text message",
+      "webhookId": "02528778-81b9-462e-83ae-d3d406fb927e"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 2
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -1952,
+        -32
+      ],
+      "id": "a7be4a74-3d12-46b7-b8bd-b100f8d2dd4f",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [],
+        []
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "197f29ce-92b8-481a-b520-7e5cc34651b4",
+  "meta": {
+  },
+  "nodeGroups": [],
+  "id": "Qx5ffzzDJdh2oBb1",
+  "tags": []
+}

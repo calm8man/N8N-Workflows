@@ -1,0 +1,256 @@
+{
+  "name": "ETH_Price",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "1027"
+            },
+            {
+              "name": "convert",
+              "value": "USD"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -1360,
+        32
+      ],
+      "id": "ec9db6ee-8427-4352-9b13-4e8dfdc28feb",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "I7lLhPVscaYJyHMY",
+          "name": "CoinMarketCap API Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "={\n  \"Price\":  {{ $json.data[\"1027\"].quote.USD.price }},\n  \"percent_24\": {{ $json.data[\"1027\"].quote.USD.percent_change_24h }},\n  \"percent_7\": {{ $json.data[\"1027\"].quote.USD.percent_change_7d }} \n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -1152,
+        176
+      ],
+      "id": "e4362f78-c2d9-498f-9716-17415ee8feaa",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.percent_24 }}",
+                    "rightValue": -5,
+                    "operator": {
+                      "type": "number",
+                      "operation": "lte"
+                    },
+                    "id": "79d59403-fadf-42f6-a27e-087edff8b08f"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "DROP"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "f269f2a1-663b-45f3-8d85-468db417cc5b",
+                    "leftValue": "={{ $json.percent_24 }}",
+                    "rightValue": 5,
+                    "operator": {
+                      "type": "number",
+                      "operation": "gte"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "PUMP"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "a56b10f2-5ef8-44b1-ace9-1dc189c1c379",
+                    "leftValue": "={{ $json.percent_7 }}",
+                    "rightValue": -10,
+                    "operator": {
+                      "type": "number",
+                      "operation": "lte"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "WEEKLY_DROP"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "none",
+          "allMatchingOutputs": true
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -880,
+        96
+      ],
+      "id": "7d4ccf75-d3a7-483a-ab90-c559434ca3a1",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "text": "=XRP Alert\nPrice: {{ $json.Price.round(3) }} USD\n\n24h: {{ $json.percent_24.round(3) }}%\n\n7d: {{$json.percent_7.round(3) }}%",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -528,
+        0
+      ],
+      "id": "3ce06c6e-513f-43ea-95b9-d48634db219e",
+      "name": "Send a text message",
+      "webhookId": "02528778-81b9-462e-83ae-d3d406fb927e"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 2
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -1584,
+        144
+      ],
+      "id": "aef70d6b-6602-4d41-a96c-3531f6b29914",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "b74439ac-3985-46de-a79c-96282a32b3d1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ac0b08ba95d1ee59ac38a85c0f89f863eec281a462592ec2869977d250be7974"
+  },
+  "nodeGroups": [],
+  "id": "W7inB7nTO9E3Vixy",
+  "tags": []
+}
